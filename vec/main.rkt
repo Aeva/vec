@@ -20,6 +20,14 @@
 
 
 (provide swiz
+         vec-x
+         vec-y
+         vec-z
+         vec-w
+         vec-r
+         vec-g
+         vec-b
+         vec-a
          vec4
          vec3
          vec2
@@ -137,6 +145,18 @@
 (define (swiz vec . channels)
   (for/list ([c (in-list channels)])
     (list-ref vec c)))
+
+
+(define vec-x car)
+(define vec-y cadr)
+(define vec-z caddr)
+(define vec-w cadddr)
+
+
+(define vec-r vec-x)
+(define vec-g vec-y)
+(define vec-b vec-z)
+(define vec-a vec-w)
 
 
 (define (vec-op op)
