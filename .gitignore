@@ -1,2 +1,6 @@
 compiled
+vec/doc
 *.bak
+*.html
+*.css
+*.js
