@@ -43,6 +43,7 @@
          dot
          vec-len
          normalize
+         safe-normalize
          distance
          cross
          mat4-invert
@@ -211,7 +212,14 @@
 
 
 (define (normalize vec)
-  (vec/ vec (dot vec vec)))
+  (vec/ vec (vec-len vec)))
+
+
+(define (safe-normalize vec otherwise)
+  (let ([vec.vec (dot vec vec)])
+    (if (vec.vec . > . 0.0)
+        (vec/ vec (sqrt vec.vec))
+        otherwise)))
 
 
 (define (distance lhs rhs)
