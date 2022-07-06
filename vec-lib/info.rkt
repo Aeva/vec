@@ -4,7 +4,7 @@
 (define collection "vec")
 (define version "0.0")
 (define pkg-desc
-  "implementation (no documentation) part of \"scribble\"")
+  "implementation (no documentation) part of \"vec\"")
 (define pkg-authors
   '(aeva))
 (define license

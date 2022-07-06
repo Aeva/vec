@@ -69,26 +69,25 @@
          lerp)
 
 
-(define (vec size . params)
+(define (vec size param0 params)
   (if (and
-       (number? (car params))
-       (null? (cdr params)))
-      (for/list ([i (in-range size)])
-        (car params))
-      (let ([params (append (flatten params) (list 0. 0. 0. 0.))])
+       (number? param0)
+       (null? params))
+      (make-list size param0)
+      (let ([params (flatten (list* param0 params '(0. 0. 0. 0.)))])
         (take params size))))
 
 
-(define (vec4 . params)
-  (apply vec (cons 4 params)))
+(define (vec4 param0 . params)
+  (vec 4 param0 params))
 
 
-(define (vec3 . params)
-  (apply vec (cons 3 params)))
+(define (vec3 param0 . params)
+  (vec 3 param0 params))
 
 
-(define (vec2 . params)
-  (apply vec (cons 2 params)))
+(define (vec2 param0 . params)
+  (vec 2 param0 params))
 
 
 ; Column-major 4x4 matrix.
@@ -109,37 +108,30 @@
         0. 0. 0. 1.))
 
 
+(define (n-length-list-of? n ok? thing)
+  ;; checks in one tail-recursive pass
+  ;; invariant: n satisfies exact-nonnegative-integer?
+  (if (eq? 0 n) ;; valid because 0 is a fixnum
+      (null? n)
+      (and (pair? thing)
+           (ok? (car thing))
+           (n-length-list-of? (sub1 n) ok? (cdr thing)))))
+
+
 (define (vec4? thing)
-  (and (list? thing)
-       (eq? 4 (length thing))
-       (number? (car thing))
-       (number? (cadr thing))
-       (number? (caddr thing))
-       (number? (cadddr thing))))
+  (n-length-list-of? 4 number? thing))
 
 
 (define (vec3? thing)
-  (and (list? thing)
-       (eq? 3 (length thing))
-       (number? (car thing))
-       (number? (cadr thing))
-       (number? (caddr thing))))
+  (n-length-list-of? 3 number? thing))
 
 
 (define (vec2? thing)
-  (and (list? thing)
-       (eq? 2 (length thing))
-       (number? (car thing))
-       (number? (cadr thing))))
+  (n-length-list-of? 2 number? thing))
 
 
 (define (mat4? thing)
-  (and (list? thing)
-       (eq? 4 (length thing))
-       (vec4? (car thing))
-       (vec4? (cadr thing))
-       (vec4? (caddr thing))
-       (vec4? (cadddr thing))))
+  (n-length-list-of? 4 vec4? thing))
 
 
 (define (swiz vec . channels)
@@ -159,42 +151,47 @@
 (define vec-a vec-w)
 
 
-(define (vec-op op)
-  (define (outter lhs rhs . others)
-    (let ([inner
-           (λ (lhs rhs)
-             (cond [(number? lhs)
-                    (for/list ([num (in-list rhs)])
-                      (op lhs num))]
-                   [(number? rhs)
-                    (for/list ([num (in-list lhs)])
-                      (op num rhs))]
-                   [else
-                    (for/list ([i (in-range (min (length lhs) (length rhs)))])
-                      (let ([a (list-ref lhs i)]
-                            [b (list-ref rhs i)])
-                        (op a b)))]))])
-      (let ([ret (inner lhs rhs)])
-        (if (null? others)
-            ret
-            (apply outter (cons ret others))))))
-  outter)
+(define-syntax-rule (define-vec-op name op-expr)
+  ;; macro layer to make `object-name` work w/o runtime overhead
+  (define name
+    (let ([op op-expr])
+      (define (name lhs rhs . others)
+        (perform-vec-op op lhs rhs others))
+      name)))
+(define (perform-vec-op op lhs rhs others)
+  ;; helper function to reduce size of generated code
+  (define ret
+    (cond
+      [(number? lhs)
+       (for/list ([num (in-list rhs)])
+         (op lhs num))]
+      [(number? rhs)
+       (for/list ([num (in-list lhs)])
+         (op num rhs))]
+      [else
+       ;; will stop at the end of the shorter list (unlike `map`)
+       (for/list ([a (in-list lhs)]
+                  [b (in-list rhs)])
+         (op a b))]))
+  (if (pair? others)
+      (perform-vec-op op ret (car others) (cdr others))
+      ret))
 
 
-(define vec+ (vec-op +))
+(define-vec-op vec+ +)
 
 
-(define vec- (vec-op -))
+(define-vec-op vec- -)
 
 
-(define vec* (vec-op *))
+(define-vec-op vec* *)
 
 
-(define vec/ (vec-op /))
+(define-vec-op vec/ /)
 
 
 ; Divide and round up.
-(define vec/↑ (vec-op (lambda (n d) (ceiling (/ n d)))))
+(define-vec-op vec/↑ (λ (n d) (ceiling (/ n d))))
 
 
 (define (vec= lhs rhs)
@@ -205,10 +202,10 @@
      (= a b))))
 
 
-(define vec-min (vec-op min))
+(define-vec-op vec-min min)
 
 
-(define vec-max (vec-op max))
+(define-vec-op vec-max max)
 
 
 (define (vec-floor vec)
