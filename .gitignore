@@ -1,6 +1,11 @@
-compiled
-vec/doc
-*.bak
+/vec/doc/
+/vec-lib/doc/
+compiled/
 *.html
 *.css
 *.js
+*.bak
+*~
+\#*
+.\#*
+.DS_Store

@@ -1,9 +1,11 @@
 #lang scribble/manual
 
 @(require (for-label vec))
-@(require (for-label racket/math))
+@(require (for-label racket))
+@(require scribble/example)
 
 @title{Vec: Very Excellent veCtors}
+@author[(author+email "Aeva Palecek" "aeva.ntsc@gmail.com")]
 @defmodule[vec]
 
 Vec is a simple vector math library for Racket.
@@ -14,6 +16,9 @@ shaders relatively painless.
 
 Vec has no dependencies beyond the Racket standard library.  The source code and
 this documentation are licensed under the Apache 2.0 license.
+
+@(define make-vec-eval
+   (make-eval-factory '(vec)))
 
 @section{Features}
 
@@ -41,6 +46,10 @@ upon their life decisions.
 
 @section{Vector Construction}
 
+@deftogether[(@defproc[(vec2 [arg any/c] ...+) vec2?]
+               @defproc[(vec3 [arg any/c] ...+) vec3?]
+               @defproc[(vec4 [arg any/c] ...+) vec4?])]{
+
 Vector construction is similar to that of GLSL.  Fixed sized vectors are
 typically constructed with the @racket[vec2], @racket[vec3], or @racket[vec4]
 functions.  The arguments for these functions may be either a singular scalar
@@ -50,36 +59,62 @@ size.
 
 The following are all valid, equivalent, and return @racket['(1. 1. 1. 1.)]:
 
-@racketblock[
- (vec4 1.)
+@examples[
+ #:eval (make-vec-eval)
+ (eval:check (vec4 1.)
+             '(1. 1. 1. 1.))
  
- (vec4 1. 1. 1. 1.)
+ (eval:check (vec4 1. 1. 1. 1.)
+             '(1. 1. 1. 1.))
  
- (vec4 1. (vec2 1.) 1.)
+ (eval:check (vec4 1. (vec2 1.) 1.)
+             '(1. 1. 1. 1.))
  
- (vec4 (vec3 1. (vec2 1.)) 1.)
+ (eval:check (vec4 (vec3 1. (vec2 1.)) 1.)
+             '(1. 1. 1. 1.))
 
- (vec4 1. 1. 1. 1. "Please don't do this.")
+ (eval:check (vec4 1. 1. 1. 1. "Please don't do this.")
+             '(1. 1. 1. 1.))
 
- (vec4 (vec4 1.) 1. 3. 1. 2.)]
+ (eval:check (vec4 (vec4 1.) 1. 3. 1. 2.)
+             '(1. 1. 1. 1.))
+ ]}
+
+@deftogether[(@defproc[(vec2? [x any/c]) boolean?]
+               @defproc[(vec3? [x any/c]) boolean?]
+               @defproc[(vec4? [x any/c]) boolean?])]{
+ Predicates recognizing vectors of particular lengths.
+ These could have been written as, for example:
+ @racketblock[
+ (define vec3?
+   (list/c number? number? number?))]
+}
 
 @section{Vector Swizzling}
+
+@defproc[(swiz [vec (or/c vec2? vec3? vec4?)]
+               [channel (integer-in 0 (length vec))]
+               ...)
+         (listof number?)]{
 
 When working with vectors, it is common to need to rearrange, duplicate, or
 extract a subset of a vector's channels.  This @italic{verb} is called
 @hyperlink["https://en.wikipedia.org/wiki/Swizzling_(computer_graphics)" "swizzling"].
 Vec provides rudimentary swizzling via the @racket[swiz] function.
 
-@#reader scribble/comment-reader
- (racketblock
-   (define fnord (vec4 2. 4. 6. 8.))
+@examples[
+ #:eval (make-vec-eval)
+ (define fnord (vec4 2. 4. 6. 8.))
 
-   (swiz fnord 0 0 1 1) ; => '(2. 2. 4. 4.)
+ (eval:check (swiz fnord 0 0 1 1)
+             '(2. 2. 4. 4.))
  
-   (swiz fnord 1 3 1 2) ; => '(4. 8. 4. 6.)
+ (eval:check (swiz fnord 1 3 1 2)
+             '(4. 8. 4. 6.))
 
-   (swiz fnord 2 2 1) ; => '(6. 6. 4.)
- )
+ (eval:check (swiz fnord 2 2 1)
+             '(6. 6. 4.))
+ ]}
 
 @section{API}
 
